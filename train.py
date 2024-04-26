@@ -15,13 +15,13 @@ import random
 from dataloader import load_data
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gpu_avail", type=str, default="0", help="available GPUs")
+parser.add_argument("--gpu_avail", type=str, default="6", help="available GPUs")
 parser.add_argument("--batch_size", type=int, default=16)
-parser.add_argument("--init_lr", type=float, default=1e-4, help="initial learning rate")
+parser.add_argument("--init_lr", type=float, default=2e-4, help="initial learning rate")
 parser.add_argument("--cut_len", type=int, default=8000, help="cut length, default is 8000")
 parser.add_argument("--epochs", type=int, default=120, help="number of epochs of training")
 parser.add_argument("--steps", type=int, default=500000, help="number of steps where training stops")
-parser.add_argument("--data_dir", type=str, default='/data/hdd0/xinan.chen/VCTK_wav_single_trim',
+parser.add_argument("--data_dir", type=str, default='/data/hdd1/xinan.chen/VCTK_wav_single_trim',
                     help="dir of VCTK+DEMAND dataset")
 parser.add_argument("--save_model_dir", type=str, default='./ckpts',
                     help="dir of saved model")
@@ -310,7 +310,7 @@ def ddp_setup(rank, world_size):
     init_process_group(backend="nccl", rank=rank, world_size=world_size)
 
 def main(rank: int, world_size: int, args):
-    set_seed(3407)
+    set_seed(1234)
     ddp_setup(rank, world_size)
     torch.cuda.set_device(rank)
     if rank == 0:

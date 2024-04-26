@@ -12,12 +12,13 @@ import argparse
 import datetime
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import torchaudio.functional as aF
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gpu_avail", type=str, default="0", help="available GPUs")
-parser.add_argument("--model_path", type=str, default='./ckpts/best_ckpt_04_14_18_29',
+parser.add_argument("--gpu_avail", type=str, default="6", help="available GPUs")
+parser.add_argument("--model_path", type=str, default='./ckpts/best_ckpt_04_26_10_16',
                     help="the path where the model is saved")
-parser.add_argument("--test_dir", type=str, default='/data/hdd0/xinan.chen/VCTK_wav_single/test',
+parser.add_argument("--test_dir", type=str, default='/data/hdd1/xinan.chen/VCTK_wav_single/test',
                     help="noisy tracks dir to be enhanced")
 parser.add_argument("--sample_num", type=int, default=1, help="number of tracks to be saved and plotted")
 
@@ -29,7 +30,7 @@ def plot_spectrogram(waveform, save_dir, title=None, n_fft=2048, hop_length=512)
         waveform, 
         n_fft=n_fft, 
         hop_length=hop_length, 
-        window=torch.hamming_window(n_fft),
+        window=torch.hann_window(n_fft),
         return_complex=True
     )
     mag = torch.abs(spec)
@@ -88,10 +89,9 @@ def cal_AWPD(pred, target, mode):
 
 @torch.no_grad()
 def enhance_one_track(
-    model, audio_path
+    model, noisy_audio, sr
 ):
-    name = os.path.split(audio_path)[-1]
-    noisy, sr = torchaudio.load(audio_path)
+    noisy = noisy_audio
     assert sr == 16000
     noisy = noisy.cuda()
 
@@ -150,7 +150,7 @@ def enhance_one_track(
     return est_audio.unsqueeze(0).cpu(), length
 
 
-def evaluation(args, noisy_dir, clean_dir):
+def evaluation(args, clean_dir):
     model_path = args.model_path
     sample_num = args.sample_num
 
@@ -158,7 +158,7 @@ def evaluation(args, noisy_dir, clean_dir):
     model.load_state_dict((torch.load(model_path)))
     model.eval()
 
-    audio_list = os.listdir(noisy_dir)
+    audio_list = os.listdir(clean_dir)
     audio_list = natsorted(audio_list)
     num = len(audio_list)
     print("Total {} tracks to be enhanced and evaluated".format(num))
@@ -181,17 +181,21 @@ def evaluation(args, noisy_dir, clean_dir):
         os.makedirs(sample_saved_dir)
 
     for idx, audio in tqdm(enumerate(audio_list), total=num):
-        noisy_path = os.path.join(noisy_dir, audio)
+        # noisy_path = os.path.join(noisy_dir, audio)
         clean_path = os.path.join(clean_dir, audio)
-        est_audio, length = enhance_one_track(
-            model, noisy_path
-        )
         clean_audio, sr1 = torchaudio.load(clean_path)
-        noisy_audio, sr2 = torchaudio.load(noisy_path)
-        # clean_audio, sr = sf.read(clean_path)
-        # noisy_audio, sr = sf.read(noisy_path)
+        length = clean_audio.size(-1)
+        noisy_audio =aF.resample(clean_audio, orig_freq=16000, new_freq=8000)
+        noisy_audio =aF.resample(noisy_audio, orig_freq=8000, new_freq=16000)
+        noisy_audio = noisy_audio[:, : length]
+        est_audio, _ = enhance_one_track(
+            model, noisy_audio, sr1
+        )
+        # clean_audio, sr1 = torchaudio.load(clean_path)
+        # noisy_audio, sr2 = torchaudio.load(noisy_path)
+
         assert sr1 == 16000
-        assert sr2 == 16000
+        # assert sr2 == 16000
         # metrics = compute_metrics(clean_audio, est_audio, sr, 0)
         clean_mag, clean_pha = STFT(clean_audio)
         est_mag, est_pha = STFT(est_audio)
@@ -254,6 +258,6 @@ def evaluation(args, noisy_dir, clean_dir):
 
 if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_avail
-    noisy_dir = os.path.join(args.test_dir, "noisy")
+    # noisy_dir = os.path.join(args.test_dir, "noisy")
     clean_dir = os.path.join(args.test_dir, "clean")
-    evaluation(args, noisy_dir, clean_dir)
+    evaluation(args, clean_dir)

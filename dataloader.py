@@ -1,5 +1,6 @@
 import torch.utils.data
 import torchaudio
+import torchaudio.functional as aF
 import os
 from utils import *
 import random
@@ -26,42 +27,47 @@ class DemandDataset(torch.utils.data.Dataset):
         return len(self.clean_wav_name)
     
     def filter(self, wav):
-        if self.cv == 0:
-            # train
-            ForI = random.randint(0, 1)
-            if ForI == 0:
-                # FIR
-                numtaps = random.randint(7, 31)
-                cutoff = 0.5
-                win = random.choice(['hamming', 'hann', 'blackman', 'bartlett'])
-                b=firwin(numtaps, cutoff, window = win, pass_zero='lowpass')
-                a=1
-            else:
-                # IIR
-                N = random.randint(4, 12)
-                Wn = 0.5
-                ft = random.choice(['butter', 'cheby1', 'cheby2', 'ellip', 'bessel'])
-                if ft == 'cheby1':
-                    rp = random.choice([1e-6, 1e-3, 1, 5])
-                    rs = None
-                elif ft == 'cheby2':
-                    rp = None
-                    rs = random.choice([20, 40, 60, 80])
-                elif ft == 'ellip':
-                    rp = random.choice([1e-6, 1e-3, 1, 5])
-                    rs = random.choice([20, 40, 60, 80])
-                else:
-                    rp = None
-                    rs = None
-                b, a =iirfilter(N, Wn, rp=rp, rs=rs,btype='lowpass',ftype=ft, output='ba')
-        else:
-            # test
-            order = 8
-            rp = 0.05
-            b, a =iirfilter(order, 0.5, rp, btype='lowpass', ftype='cheby1', output='ba')
+        # if self.cv == 0:
+        #     # train
+        #     ForI = random.randint(0, 1)
+        #     if ForI == 0:
+        #         # FIR
+        #         numtaps = random.randint(7, 31)
+        #         cutoff = 0.5
+        #         win = random.choice(['hamming', 'hann', 'blackman', 'bartlett'])
+        #         b=firwin(numtaps, cutoff, window = win, pass_zero='lowpass')
+        #         a=1
+        #     else:
+        #         # IIR
+        #         N = random.randint(4, 12)
+        #         Wn = 0.5
+        #         ft = random.choice(['butter', 'cheby1', 'cheby2', 'ellip', 'bessel'])
+        #         if ft == 'cheby1':
+        #             rp = random.choice([1e-6, 1e-3, 1, 5])
+        #             rs = None
+        #         elif ft == 'cheby2':
+        #             rp = None
+        #             rs = random.choice([20, 40, 60, 80])
+        #         elif ft == 'ellip':
+        #             rp = random.choice([1e-6, 1e-3, 1, 5])
+        #             rs = random.choice([20, 40, 60, 80])
+        #         else:
+        #             rp = None
+        #             rs = None
+        #         b, a =iirfilter(N, Wn, rp=rp, rs=rs,btype='lowpass',ftype=ft, output='ba')
+        # else:
+        #     # test
+        #     order = 8
+        #     rp = 0.05
+        #     b, a =iirfilter(order, 0.5, rp, btype='lowpass', ftype='cheby1', output='ba')
+        
 
-        wav_l = filtfilt(b, a, wav.numpy())
-        wav_l = torch.from_numpy(wav_l.copy()).to(torch.float32)
+        # wav_l = filtfilt(b, a, wav.numpy())
+        # wav_l = torch.from_numpy(wav_l.copy()).to(torch.float32)
+        length = wav.size(-1)
+        wav_l = aF.resample(wav, orig_freq=16000, new_freq=8000)
+        wav_l = aF.resample(wav_l, orig_freq=8000, new_freq=16000)
+        wav_l = wav_l[:, : length]
         return wav_l
 
     def __getitem__(self, idx):

@@ -71,7 +71,7 @@ class Block(nn.Module):
 class APNet(nn.Module):
     def __init__(self, Freqbin=513):
         super(APNet, self).__init__()
-        self.B = Freqbin*2
+        self.B = Freqbin
         self.Ain = nn.Sequential(
             nn.Conv1d(Freqbin, self.B, kernel_size=3, padding=1),
             LayerNorm(self.B, eps=1e-6, data_format="channels_first")
