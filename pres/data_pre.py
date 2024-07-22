@@ -96,19 +96,19 @@ if __name__ == '__main__':
                 else:
                     torchaudio.save(os.path.join(save_test_clean_path, file[:-5] + ".wav"), wav, sample_rate=output_sample_rate)
 
-                # save noisy wav (先滤波)
-                order = 8
-                ripple = 0.05
-                hi = 1/args.downsample_rate
-                b, a =iirfilter(order, hi, rp=ripple, btype='lowpass',ftype='cheby1', output='ba')
-                wav_l = filtfilt(b, a, wav.numpy())
-                wav_l = torch.from_numpy(wav_l.copy()).to(torch.float32)
+                # save noisy wav (先滤波) (Not required)
+                # order = 8
+                # ripple = 0.05
+                # hi = 1/args.downsample_rate
+                # b, a =iirfilter(order, hi, rp=ripple, btype='lowpass',ftype='cheby1', output='ba')
+                # wav_l = filtfilt(b, a, wav.numpy())
+                # wav_l = torch.from_numpy(wav_l.copy()).to(torch.float32)
 
-                assert len(wav_l) == len(wav)
+                # assert len(wav_l) == len(wav)
 
-                if idx <= args.train_num:
-                    torchaudio.save(os.path.join(save_train_noisy_path, file[:-5] + ".wav"), wav_l, sample_rate=output_sample_rate)
-                else:
-                    torchaudio.save(os.path.join(save_test_noisy_path, file[:-5] + ".wav"), wav_l, sample_rate=output_sample_rate)
+                # if idx <= args.train_num:
+                #     torchaudio.save(os.path.join(save_train_noisy_path, file[:-5] + ".wav"), wav_l, sample_rate=output_sample_rate)
+                # else:
+                #     torchaudio.save(os.path.join(save_test_noisy_path, file[:-5] + ".wav"), wav_l, sample_rate=output_sample_rate)
         
     print("done")
