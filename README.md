@@ -5,7 +5,7 @@ This is the unofficial implementation of [Towards High-Quality and Efficient Spe
 
 ## Training:
 
-first prepare data
+First prepare data: You need to convert the VCTK dataset to WAV format and truncate the head and tail silence segments. You can refer to the file pres/data_pre.py
 
 To train this model, run his code:
 
@@ -13,6 +13,8 @@ To train this model, run his code:
 python train.py --gpu_avail [gpu_ids] --batch_size [batch] --init_lr [initial learning rate] --epochs [number of epochs of training] or --steps [number of steps where training stops] --data_dir [dir of VCTK dataset]
 ```
 or you may change default options in train.py
+
+To run inference or evaluation steps，you can refer to the file evaluation.py
 
 
 ## Notes:
