@@ -16,9 +16,9 @@ import torchaudio.functional as aF
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gpu_avail", type=str, default="6", help="available GPUs")
-parser.add_argument("--model_path", type=str, default='./ckpts/best_ckpt_04_26_10_16',
+parser.add_argument("--model_path", type=str, default='./ckpts/your_ckpt',
                     help="the path where the model is saved")
-parser.add_argument("--test_dir", type=str, default='/data/hdd1/xinan.chen/VCTK_wav_single/test',
+parser.add_argument("--test_dir", type=str, default='your_path/VCTK_wav_single/test',
                     help="noisy tracks dir to be enhanced")
 parser.add_argument("--sample_num", type=int, default=1, help="number of tracks to be saved and plotted")
 
@@ -106,12 +106,6 @@ def enhance_one_track(
     padding_len = padded_len - length
     noisy = torch.cat([noisy, noisy[:, :padding_len]], dim=-1) # 长度不足frame整数倍的部分用前面的数据补齐
     # cut_len = 16 * 16000
-    # if padded_len > cut_len: # 如果大于16s
-    #     batch_size = int(np.ceil(padded_len / cut_len))
-    #     # 莫名其妙？？？
-    #     while 80 % batch_size != 0:
-    #         batch_size += 1
-    #     noisy = torch.reshape(noisy, (batch_size, -1))
     noisy_spec = torch.stft(
         noisy,
         n_fft = 1024,
